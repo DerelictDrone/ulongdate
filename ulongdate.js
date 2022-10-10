@@ -51,13 +51,10 @@ class ULongDate extends Date {
 		string += bitWriter(this.getSeconds(),6)
 		string += bitWriter(this.getMilliseconds(),10)
 		string += bitWriter(this.Timezone,6,{signed: true})
-		// console.log(string.length)
 		string = LEndian ? string : string.split('').reverse().join('')
 		if(LEndian) {
 			buffer.writeUIntLE(bitReader(string.slice(0,32)),0,4)
-			// console.log(buffer)
 			buffer.writeUIntLE(bitReader(string.slice(32,64)),4,4)
-			// console.log(buffer)
 		} else {
 			buffer.writeUIntBE(bitReader(string.slice(0,32)),0,4)
 			buffer.writeUIntBE(bitReader(string.slice(32,64)),0,4)
@@ -116,7 +113,6 @@ class ULongDate extends Date {
 		const oldTimezone = this.Timezone
 		const hours = this.getHours()
 		this.setHours(hours + (timezone - oldTimezone))
-		console.log(oldTimezone - timezone)
 		this.Timezone = timezone
 	}
 	getTime() {
@@ -127,7 +123,6 @@ class ULongDate extends Date {
 		const divby100 = (this.getFullYear(true) % BigInt(100)) === BigInt(0)
 		const divby400 = (this.getFullYear(true) % BigInt(400)) === BigInt(0)
 		const leap =  divby4 && !(divby100 && !divby400) // Whether or not the current year is a leap year
-		console.log(leap, divby4,divby100,divby400)
 		const monthdays = [31,60,91,122,152,182,213,243,274,304,334,365] // Hand-assembled list of how far we are into the current year month-by-month
 		let yearcompletion = monthdays[this.getMonth()-1] + (leap && this.getMonth() > 1 ? 1 : 0)
 		const ms = this.milliseconds + (this.seconds*1000) + (this.minutes*60*1000) + (this.hours*60*60*1000) + ((yearcompletion + this.date)*24*60*60*1000)
@@ -162,7 +157,6 @@ function bitReader(string,options = {LEndian: true, signed: false}) {
 	} else {
 		num = 0
 	}
-	let q
 	let l
 	if(options.signed && string[size-1] === "1") {
 		l = size-1
@@ -171,7 +165,7 @@ function bitReader(string,options = {LEndian: true, signed: false}) {
 		l = size
 	}
 	for(let i = 0; i < l; i++) {
-		if(string[i] === q && !(i === size-1 && options.signed)) {
+		if(string[i] === '1' && !(i === size-1 && options.signed)) {
 			num += big ? BigInt(Math.pow(2,i)) : Math.pow(2,i)
 		}
 	}
@@ -183,18 +177,18 @@ function bitWriter(number,length,options = {LEndian: true}) {
 	binary = ""
 	if(big) {
 		for(let i = 0; i <= length-1; i++) {
-			(number & 	BigInt(Math.pow(2,i))) !== BigInt(0) ? binary += "1" : binary += "0"
+			(number & BigInt(Math.pow(2,i))) !== BigInt(0) ? binary += "1" : binary += "0"
 		}	
 	} else {
 		for(let i = 0; i <= length-1; i++) {
 			(number & Math.pow(2,i)) !== 0 ? binary += "1" : binary += "0"
 		}	
 	}
-	// console.log(binary)
 	if(!options.LEndian) {
 		binary = binary.split('').reverse().join('')
 	}
 	return binary
 }
+
 
 module.exports = {ULongDate, bitReader, bitWriter}
